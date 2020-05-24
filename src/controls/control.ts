@@ -7,12 +7,12 @@ const control: control = <
 >(
     emitter: E,
     event: K,
-    ...args: Emitter.ListenerArgs<Ev, K>
+    ...args: Emitter.Listeners.Args<Ev, K>
   ) => {
   return <R>( control: control.Control<E, Ev, K, R> ) => {
 
     function* steps () {
-      for ( let listener of emitter.listeners( event ) as Emitter.ListenerAssert<Ev, K>[] )
+      for ( let listener of emitter.listeners( event ) as Emitter.Listeners.Type<Ev, K>[] )
         yield listener
 
       return void 0
@@ -20,7 +20,7 @@ const control: control = <
 
     const step = steps()
 
-    const looping = ( ...args: Emitter.ListenerArgs<Ev, K> ): R => {
+    const looping = ( ...args: Emitter.Listeners.Args<Ev, K> ): R => {
       const next = step.next()
 
       if ( next.done ) return null
@@ -45,7 +45,7 @@ interface control {
   K extends keyof Ev>(
     emmiter: E,
     event: K,
-    ...args: Emitter.ListenerArgs<Ev, K>
+    ...args: Emitter.Listeners.Args<Ev, K>
   ): control.Controller<E, Ev, K>
 }
 
@@ -58,10 +58,10 @@ namespace control {
     <R>( control: Control<E, Ev, K, R> ): R
   }
   export interface Manager<E, K extends keyof E, R> {
-    args: Emitter.ListenerArgs<E, K>
-    result: ReturnType<Emitter.ListenerAssert<E, K>>
+    args: Emitter.Listeners.Args<E, K>
+    result: ReturnType<Emitter.Listeners.Type<E, K>>
     remove(): void
-    next( ...args: Emitter.ListenerArgs<E, K> ): R | null
+    next( ...args: Emitter.Listeners.Args<E, K> ): R | null
   }
   export type Control<
     E extends Emitter<any>,

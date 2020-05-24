@@ -15,15 +15,15 @@ class Emitter<E> {
 
   public count = <K extends Emitter.Keys<E>>( event: K ) => this.listeners( event ).length
 
-  public listeners = <K extends Emitter.Keys<E>>( event: K ): Emitter.ListenerAssert<E, K>[] => {
+  public listeners = <K extends Emitter.Keys<E>>( event: K ): Emitter.Listeners.Type<E, K>[] => {
     if ( !this.__events[event] ) return this.__events[event] = []
     return this.__events[event] ?? []
   }
 
   public once: Emitter.Once<E> = <K extends Emitter.Keys<E>>(
-    event: K | Emitter.ObjectListeners<E>,
-    listener?: Emitter.ListenerAssert<E, K>,
-    ...listeners: Emitter.ListenerAssert<E, K>[]
+    event: K | Emitter.Listeners.Object<E>,
+    listener?: Emitter.Listeners.Type<E, K>,
+    ...listeners: Emitter.Listeners.Type<E, K>[]
   ) => {
     if ( typeof event === 'object' )
       entries( event )
@@ -31,28 +31,28 @@ class Emitter<E> {
           if ( Array.isArray( listeners ) )
             if ( listeners.length ) return this.once( event, listeners[0], ...listeners.slice( 1 ) )
             else return () => {}
-          return this.once( event, listeners as Emitter.ListenerAssert<E> )
+          return this.once( event, listeners as Emitter.Listeners.Type<E, K> )
         } )
     
     else Array( listener ).concat( listeners ).forEach( listener => {
       const middleware = ( ( ...args: any[] ) => {
         this.off( event, middleware )
         return listener?.( ...args )
-      } ) as Emitter.ListenerAssert<E>
+      } ) as Emitter.Listeners.Type<E, K>
       this.on( event, middleware )
     } )
   }
 
   public on: Emitter.On<E> = <K extends Emitter.Keys<E>>(
-    event: K | Emitter.ObjectListeners<E>,
-    listener?: Emitter.ListenerAssert<E, K>,
-    ...listeners: Emitter.ListenerAssert<E, K>[]
+    event: K | Emitter.Listeners.Object<E>,
+    listener?: Emitter.Listeners.Type<E, K>,
+    ...listeners: Emitter.Listeners.Type<E, K>[]
   ) => {
     if ( typeof event === 'object' ) {
       const unlisteners = entries( event )
         .map( ( [ event, listeners ] ) => {
           if ( Array.isArray( listeners ) ) return this.on( event, listeners[0], ...listeners.slice( 1 ) )
-          return this.on( event, listeners as Emitter.ListenerAssert<E> )
+          return this.on( event, listeners as Emitter.Listeners.Type<E, K> )
         } )
 
       return () => unlisteners.forEach( forEachUnlisteners )
@@ -67,8 +67,8 @@ class Emitter<E> {
 
   public off: Emitter.Off<E> = <K extends Emitter.Keys<E>>(
     event: K,
-    listener?: Emitter.ListenerAssert<E, K>,
-    ...anothers: Emitter.ListenerAssert<E, K>[]
+    listener?: Emitter.Listeners.Type<E, K>,
+    ...anothers: Emitter.Listeners.Type<E, K>[]
   ) => {
     if ( !listener ) this.__events[event] = []
     else {
@@ -78,41 +78,47 @@ class Emitter<E> {
     }
   }
 
-  public emit = <K extends Emitter.Keys<E>>( event: K, ...args: Emitter.ListenerArgs<E, K> ) => {
+  public emit = <K extends Emitter.Keys<E>>( event: K, ...args: Emitter.Listeners.Args<E, K> ) => {
     this.listeners( event ).forEach( listener => listener( ...args ) )
   }
 }
 
 namespace Emitter {
-  export type ListenerArgs<E, K extends Keys<E>> =
-    Value<E, K> extends ( ...args: infer A ) => any ? A : never
+  export namespace Listeners {
 
-  export type ObjectListeners<E> = {
-    [K in keyof E]?: ListenerAssert<E, K> | ListenerAssert<E, K>[]
+    export type Args<E, K extends Keys<E>> = 
+      Value<E, K> extends ( ...args: infer A ) => any ? A : never
+
+    export type Type<E, K extends Keys<E>> =
+      Value<E, K> extends ( ...args: infer Args ) => infer R ? ( ...args: Args ) => R : never
+
+    export type Object<E> = {
+      [K in Keys<E>]: Type<E, K> | Type<E, K>[]
+    }
+
   }
 
-  export type ListenerAssert<E, K extends Keys<E> = Keys<E>> =
-    Value<E, K> extends ( ...args: infer Args ) => infer R ? ( ...args: Args ) => R : never
-
-  export interface Unlinester { (): void }
+  export type Unlistener = () => void
 
   export interface Off<E> {
-    <K extends Keys<E>>( event: K, listener: ListenerAssert<E, K>, ...listeners: ListenerAssert<E, K>[] ): void
+    <K extends Keys<E>>( event: K, listener: Listeners.Type<E, K>, ...listeners: Listeners.Type<E, K>[] ): void
     <K extends Keys<E>>( event: K ): void
   }
   export interface On<E> {
-    <K extends keyof E>( event: K, listener: ListenerAssert<E, K>, ...listeners: ListenerAssert<E, K>[] ): Unlinester
-    ( listeners: ObjectListeners<E> ): Unlinester
+    <K extends keyof E>( event: K, listener: Listeners.Type<E, K>, ...listeners: Listeners.Type<E, K>[] ): Unlistener
+    ( listeners: Listeners.Object<E> ): Unlistener
   }
   export interface Once<E> {
-    <K extends keyof E>( event: K, listener: ListenerAssert<E, K>, ...listeners: ListenerAssert<E, K>[] ): void
-    ( listeners: ObjectListeners<E> ): void
+    <K extends keyof E>( event: K, listener: Listeners.Type<E, K>, ...listeners: Listeners.Type<E, K>[] ): void
+    ( listeners: Listeners.Object<E> ): void
   }
+
   export type Events<E> = {
-    [K in Keys<E>]?: ( ListenerAssert<E, K> )[]
+    [K in Keys<E>]?: ( Listeners.Type<E, K> )[]
   }
 
   export type Keys<E> = keyof E
+
   export type Value<E, K extends Keys<E> = Keys<E>> =
     K extends keyof E ? E[K] :
     never
