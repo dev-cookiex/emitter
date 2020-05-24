@@ -1,0 +1,22 @@
+{
+  "name": "@cookiex/emitter",
+  "version": "1.0.0",
+  "description": "CookieX Emitter",
+  "main": "dist/index.js",
+  "repository": "https://github.com/tony-tsx/cookiex-emitter.git",
+  "author": "Tony <tony.js@zoho.eu>",
+  "license": "MIT",
+  "private": false,
+  "scripts": {
+    "test": "jest"
+  },
+  "devDependencies": {
+    "@cookiex/eslint-config": "0.3.0",
+    "@types/jest": "^25.2.3",
+    "eslint": "^7.0.0",
+    "jest": "^26.0.1",
+    "ts-jest": "^26.0.0",
+    "ts-node": "^8.10.1",
+    "typescript": "^3.9.2"
+  }
+}
