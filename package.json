@@ -10,7 +10,8 @@
   "private": false,
   "scripts": {
     "test": "jest",
-    "build": "tsc"
+    "build": "tsc",
+    "prepublish": "jest ."
   },
   "devDependencies": {
     "@cookiex/eslint-config": "0.3.0",
