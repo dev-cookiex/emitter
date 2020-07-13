@@ -1,3 +1,8 @@
+// Copyright (c) 2020 CookieX
+// 
+// This software is released under the MIT License.
+// https://opensource.org/licenses/MIT
+
 import Emitter from '../src'
 
 describe( 'emitter tests suits', () => {

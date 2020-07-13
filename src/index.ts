@@ -1,3 +1,8 @@
+// Copyright (c) 2020 CookieX
+// 
+// This software is released under the MIT License.
+// https://opensource.org/licenses/MIT
+
 const entries: {
   <O>( object: O ): [ [ keyof O, O[keyof O] ] ]
 } = ( object: any ) => {
