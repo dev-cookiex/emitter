@@ -18,6 +18,33 @@ class Emitter<E> {
 
   private __events: Emitter.Events<E> = {}
 
+  private __all: Emitter.Listeners.All<E>[] = []
+
+  private __onAll = ( ...listeners: Emitter.Listeners.All<E>[] ) => {
+    this.__all.push( ...listeners )
+    return () => this.all.off( ...listeners )
+  }
+
+  private __onOnce = ( ...listeners: Emitter.Listeners.All<E>[] ) => {
+    const middlewares = listeners.map(
+      listener => <K extends keyof E>( event: K, ...args: Emitter.Listeners.Args<E, K> ) => {
+        this.all.off( listener )
+        return listener( event, ...args )
+      } )
+    return this.all( ...middlewares )
+  }
+
+  private __offAll = ( ...listeners: Emitter.Listeners.All<E>[] ) => {
+    listeners.forEach(
+      listener => this.__all.splice( this.__all.indexOf( listener ), 1 )
+    )
+  }
+
+  public all = Object.assign( this.__onAll, {
+    off: this.__offAll,
+    once: this.__onOnce
+  } )
+
   public count = <K extends keyof E>( event: K ) => this.listeners( event ).length
 
   public listeners = <K extends keyof E>( event: K ): Emitter.Listeners.Type<E, K>[] => {
@@ -84,6 +111,7 @@ class Emitter<E> {
   }
 
   public emit = <K extends keyof E>( event: K, ...args: Emitter.Listeners.Args<E, K> ) => {
+    this.__all.forEach( listener => listener( event, ...args ) )
     this.listeners( event ).forEach( listener => listener( ...args ) )
   }
 }
@@ -99,6 +127,10 @@ namespace Emitter {
 
     export type Object<E> = {
       [K in keyof E]: Type<E, K> | Type<E, K>[]
+    }
+
+    export interface All<E> {
+      <K extends keyof E>( event: K, ...args: Args<E, K> ): void
     }
 
   }
