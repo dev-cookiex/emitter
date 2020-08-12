@@ -18,14 +18,14 @@ class Emitter<E> {
 
   private __events: Emitter.Events<E> = {}
 
-  public count = <K extends Emitter.Keys<E>>( event: K ) => this.listeners( event ).length
+  public count = <K extends keyof E>( event: K ) => this.listeners( event ).length
 
-  public listeners = <K extends Emitter.Keys<E>>( event: K ): Emitter.Listeners.Type<E, K>[] => {
+  public listeners = <K extends keyof E>( event: K ): Emitter.Listeners.Type<E, K>[] => {
     if ( !this.__events[event] ) return this.__events[event] = []
     return this.__events[event] ?? []
   }
 
-  public once: Emitter.Once<E> = <K extends Emitter.Keys<E>>(
+  public once: Emitter.Once<E> = <K extends keyof E>(
     event: K | Emitter.Listeners.Object<E>,
     listener?: Emitter.Listeners.Type<E, K>,
     ...listeners: Emitter.Listeners.Type<E, K>[]
@@ -48,7 +48,7 @@ class Emitter<E> {
     } )
   }
 
-  public on: Emitter.On<E> = <K extends Emitter.Keys<E>>(
+  public on: Emitter.On<E> = <K extends keyof E>(
     event: K | Emitter.Listeners.Object<E>,
     listener?: Emitter.Listeners.Type<E, K>,
     ...listeners: Emitter.Listeners.Type<E, K>[]
@@ -70,7 +70,7 @@ class Emitter<E> {
     return () => this.off( event, listener, ...listeners )
   }
 
-  public off: Emitter.Off<E> = <K extends Emitter.Keys<E>>(
+  public off: Emitter.Off<E> = <K extends keyof E>(
     event: K,
     listener?: Emitter.Listeners.Type<E, K>,
     ...anothers: Emitter.Listeners.Type<E, K>[]
@@ -83,7 +83,7 @@ class Emitter<E> {
     }
   }
 
-  public emit = <K extends Emitter.Keys<E>>( event: K, ...args: Emitter.Listeners.Args<E, K> ) => {
+  public emit = <K extends keyof E>( event: K, ...args: Emitter.Listeners.Args<E, K> ) => {
     this.listeners( event ).forEach( listener => listener( ...args ) )
   }
 }
@@ -91,14 +91,14 @@ class Emitter<E> {
 namespace Emitter {
   export namespace Listeners {
 
-    export type Args<E, K extends Keys<E>> = 
-      Value<E, K> extends ( ...args: infer A ) => any ? A : never
+    export type Args<E, K extends keyof E> = 
+      E[K] extends ( ...args: infer A ) => any ? A : never
 
-    export type Type<E, K extends Keys<E>> =
-      Value<E, K> extends ( ...args: infer Args ) => infer R ? ( ...args: Args ) => R : never
+    export type Type<E, K extends keyof E> =
+      E[K] extends ( ...args: infer Args ) => infer R ? ( ...args: Args ) => R : never
 
     export type Object<E> = {
-      [K in Keys<E>]: Type<E, K> | Type<E, K>[]
+      [K in keyof E]: Type<E, K> | Type<E, K>[]
     }
 
   }
@@ -106,8 +106,8 @@ namespace Emitter {
   export type Unlistener = () => void
 
   export interface Off<E> {
-    <K extends Keys<E>>( event: K, listener: Listeners.Type<E, K>, ...listeners: Listeners.Type<E, K>[] ): void
-    <K extends Keys<E>>( event: K ): void
+    <K extends keyof E>( event: K, listener: Listeners.Type<E, K>, ...listeners: Listeners.Type<E, K>[] ): void
+    <K extends keyof E>( event: K ): void
   }
   export interface On<E> {
     <K extends keyof E>( event: K, listener: Listeners.Type<E, K>, ...listeners: Listeners.Type<E, K>[] ): Unlistener
@@ -119,14 +119,8 @@ namespace Emitter {
   }
 
   export type Events<E> = {
-    [K in Keys<E>]?: ( Listeners.Type<E, K> )[]
+    [K in keyof E]?: ( Listeners.Type<E, K> )[]
   }
-
-  export type Keys<E> = keyof E
-
-  export type Value<E, K extends Keys<E> = Keys<E>> =
-    K extends keyof E ? E[K] :
-    never
 }
 
 export default Emitter
